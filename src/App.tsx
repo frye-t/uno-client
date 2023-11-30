@@ -33,11 +33,27 @@ function App() {
       console.log('Game has started!');
     };
 
+    const onGameState = (data: string) => {
+      const gameState = JSON.parse(data);
+      console.log("Received Game State:", gameState);
+    }
+
+    const onTurnStart = () => {
+      console.log("it's your turn!");
+    }
+
+    const onTurnWaiting = (playerId: string) => {
+      console.log(`It's ${playerId}'s turn!`);
+    }
+
     socket.on('connect', onConnect);
     socket.on('disconnect', onDisconnect);
     socket.on('messageReceived', onMessageReceived);
     socket.on('playerJoined', onPlayerJoined);
     socket.on('gameStarted', onGameStarted);
+    socket.on('gameState', onGameState);
+    socket.on('turnStart', onTurnStart);
+    socket.on('turnWaiting', onTurnWaiting)
 
     return () => {
       socket.off('connect', onConnect);
@@ -45,6 +61,9 @@ function App() {
       socket.off('messageReceived', onMessageReceived);
       socket.off('playerJoined', onPlayerJoined);
       socket.off('gameStarted', onGameStarted);
+      socket.off('gameState', onGameState);
+      socket.off('turnStart', onTurnStart);
+      socket.off('turnWaiting', onTurnWaiting)
     };
   }, []);
 
