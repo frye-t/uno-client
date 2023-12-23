@@ -12,6 +12,17 @@ interface ServerOptions {
   option1: string;
 }
 
+interface CardData {
+  id: number;
+  suit: string;
+  rank: string;
+}
+
+interface AdditionalActionData {
+  action: string;
+  value: string;
+}
+
 interface ServerToClientEvents {
   messageReceived: () => void;
   playerJoined: () => void;
@@ -19,6 +30,7 @@ interface ServerToClientEvents {
   gameState: (data: string) => void;
   turnStart: () => void;
   turnWaiting: (playerId: string) => void;
+  chooseColor: () => void;
 }
 
 interface ClientToServerEvents {
@@ -26,6 +38,8 @@ interface ClientToServerEvents {
   joinRoom: (data: RoomData) => void;
   message: () => void;
   startGame: () => void;
+  playCard: (data: CardData) => void;
+  additionalAction: (data: AdditionalActionData) => void;
 }
 
 export const socket: Socket<ServerToClientEvents, ClientToServerEvents> = io(
