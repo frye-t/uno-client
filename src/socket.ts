@@ -31,6 +31,8 @@ interface ServerToClientEvents {
   turnStart: () => void;
   turnWaiting: (playerId: string) => void;
   chooseColor: () => void;
+  challenge: () => void;
+  challengeWin: () => void;
 }
 
 interface ClientToServerEvents {
@@ -40,6 +42,9 @@ interface ClientToServerEvents {
   startGame: () => void;
   playCard: (data: CardData) => void;
   additionalAction: (data: AdditionalActionData) => void;
+  drawCard: () => void;
+  confirmChallenge: () => void;
+  discardChallenge: () => void;
 }
 
 export const socket: Socket<ServerToClientEvents, ClientToServerEvents> = io(

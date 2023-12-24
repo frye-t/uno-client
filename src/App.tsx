@@ -16,6 +16,7 @@ function App() {
   const [needsColorCoice, setNeedsColorChoice] = useState(false);
   const [activeColor, setActiveColor] = useState('');
   const [activeNumber, setActiveNumber] = useState('');
+  const [canChallenge, setCanChallenge] = useState(false);
 
   const colors = ['Red', 'Blue', 'Green', 'Yellow'];
 
@@ -80,6 +81,15 @@ function App() {
       setNeedsColorChoice(true);
     };
 
+    const onChallenge = () => {
+      console.log('You can challenge this Draw Four');
+      setCanChallenge(true);
+    };
+
+    const onChallengeWin = () => {
+      setCanChallenge(false);
+    };
+
     socket.on('connect', onConnect);
     socket.on('disconnect', onDisconnect);
     socket.on('messageReceived', onMessageReceived);
@@ -89,6 +99,8 @@ function App() {
     socket.on('turnStart', onTurnStart);
     socket.on('turnWaiting', onTurnWaiting);
     socket.on('chooseColor', onChooseColor);
+    socket.on('challenge', onChallenge);
+    socket.on('challengeWin', onChallengeWin);
 
     return () => {
       socket.off('connect', onConnect);
@@ -100,6 +112,8 @@ function App() {
       socket.off('turnStart', onTurnStart);
       socket.off('turnWaiting', onTurnWaiting);
       socket.off('chooseColor', onChooseColor);
+      socket.off('challenge', onChallenge);
+      socket.off('challengeWin', onChallengeWin);
     };
   }, []);
 
@@ -143,6 +157,20 @@ function App() {
     setNeedsColorChoice(false);
   };
 
+  const drawCard = () => {
+    socket.emit('drawCard');
+  };
+
+  const handleChallenge = () => {
+    setCanChallenge(false);
+    socket.emit('confirmChallenge');
+  };
+
+  const handleDontChallenge = () => {
+    setCanChallenge(false);
+    socket.emit('discardChallenge');
+  };
+
   return (
     <div className="App">
       <ConnectionState isConnected={isConnected} />
@@ -168,6 +196,16 @@ function App() {
       {activeColor ? <p>{activeColor}</p> : null}
       {activeNumber ? <p>{activeNumber}</p> : null}
       <h1>Play Pile</h1>
+      {canChallenge ? (
+        <div>
+          <button type="button" onClick={handleChallenge}>
+            Challenge
+          </button>
+          <button type="button" onClick={handleDontChallenge}>
+            Don't Challenge
+          </button>
+        </div>
+      ) : null}
       {discardPile.length > 0 ? (
         <h2>
           {discardPile[discardPile.length - 1].suit} -{' '}
@@ -182,7 +220,7 @@ function App() {
                 type="button"
                 key={i.toString()}
                 onClick={() => playCard(i, card)}
-                disabled={!isCurrentTurn}
+                disabled={!isCurrentTurn || canChallenge}
               >
                 {card.suit} - {card.rank}
               </button>
@@ -204,7 +242,13 @@ function App() {
           })
         : null}
       <br></br>
-      <button type="button">Draw Card</button>
+      <button
+        type="button"
+        onClick={drawCard}
+        disabled={!isCurrentTurn || canChallenge}
+      >
+        Draw Card
+      </button>
     </div>
   );
 }
