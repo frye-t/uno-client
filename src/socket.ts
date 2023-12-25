@@ -43,8 +43,6 @@ interface ClientToServerEvents {
   playCard: (data: CardData) => void;
   additionalAction: (data: AdditionalActionData) => void;
   drawCard: () => void;
-  confirmChallenge: () => void;
-  discardChallenge: () => void;
 }
 
 export const socket: Socket<ServerToClientEvents, ClientToServerEvents> = io(

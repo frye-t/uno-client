@@ -157,18 +157,16 @@ function App() {
     setNeedsColorChoice(false);
   };
 
+  const handleChallenge = (accepted: boolean) => {
+    setCanChallenge(false);
+    socket.emit('additionalAction', {
+      action: 'handleChallenge',
+      value: accepted.toString(),
+    });
+  };
+
   const drawCard = () => {
     socket.emit('drawCard');
-  };
-
-  const handleChallenge = () => {
-    setCanChallenge(false);
-    socket.emit('confirmChallenge');
-  };
-
-  const handleDontChallenge = () => {
-    setCanChallenge(false);
-    socket.emit('discardChallenge');
   };
 
   return (
@@ -198,10 +196,10 @@ function App() {
       <h1>Play Pile</h1>
       {canChallenge ? (
         <div>
-          <button type="button" onClick={handleChallenge}>
+          <button type="button" onClick={() => handleChallenge(true)}>
             Challenge
           </button>
-          <button type="button" onClick={handleDontChallenge}>
+          <button type="button" onClick={() => handleChallenge(false)}>
             Don't Challenge
           </button>
         </div>
