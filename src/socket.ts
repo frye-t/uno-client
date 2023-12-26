@@ -33,6 +33,10 @@ interface ServerToClientEvents {
   chooseColor: () => void;
   challenge: () => void;
   challengeWin: () => void;
+  uno: (playerId: string) => void;
+  unoSelf: () => void;
+  roundOver: (playerId: string) => void;
+  roundOverSelf: () => void;
 }
 
 interface ClientToServerEvents {

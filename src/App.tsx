@@ -18,10 +18,16 @@ function App() {
   const [activeNumber, setActiveNumber] = useState('');
   const [canChallenge, setCanChallenge] = useState(false);
 
+  const [hasUno, setHasUno] = useState(false);
+  const [otherHasUno, setOtherHasUno] = useState(false);
+
+  const [gameOver, setGameOver] = useState(false);
+
   const colors = ['Red', 'Blue', 'Green', 'Yellow'];
 
   useEffect(() => {
     const onConnect = () => {
+      console;
       console.log('Connected');
       setIsConnected(true);
     };
@@ -44,6 +50,7 @@ function App() {
     };
 
     const onGameState = (data: string) => {
+      setGameOver(false);
       const gameState = JSON.parse(data);
       console.log('Received Game State:', gameState);
       let hand;
@@ -90,6 +97,28 @@ function App() {
       setCanChallenge(false);
     };
 
+    const onUNOOther = (playerId: string) => {
+      console.log('HERE!!!!!!!!!!!!!!!!!');
+      console.log(`Player ${playerId} has UNO!`);
+      setOtherHasUno(true);
+    };
+
+    const onUNOSelf = () => {
+      console.log('!!!!!!!!!!!!!!!!!HERE');
+      console.log('You have UNO!');
+      setHasUno(true);
+    };
+
+    const onRoundOver = (playerId: string) => {
+      console.log(`Player ${playerId} won!`);
+      setGameOver(true);
+    };
+
+    const onRoundOverSelf = () => {
+      console.log('You win!');
+      setGameOver(true);
+    };
+
     socket.on('connect', onConnect);
     socket.on('disconnect', onDisconnect);
     socket.on('messageReceived', onMessageReceived);
@@ -101,6 +130,10 @@ function App() {
     socket.on('chooseColor', onChooseColor);
     socket.on('challenge', onChallenge);
     socket.on('challengeWin', onChallengeWin);
+    socket.on('uno', onUNOOther);
+    socket.on('unoSelf', onUNOSelf);
+    socket.on('roundOver', onRoundOver);
+    socket.on('roundOverSelf', onRoundOverSelf);
 
     return () => {
       socket.off('connect', onConnect);
@@ -114,6 +147,10 @@ function App() {
       socket.off('chooseColor', onChooseColor);
       socket.off('challenge', onChallenge);
       socket.off('challengeWin', onChallengeWin);
+      socket.off('uno', onUNOOther);
+      socket.off('unoSelf', onUNOSelf);
+      socket.off('roundOver', onRoundOver);
+      socket.off('roundOverSelf', onRoundOverSelf);
     };
   }, []);
 
@@ -169,6 +206,10 @@ function App() {
     socket.emit('drawCard');
   };
 
+  console.log('hasUno:', hasUno);
+  console.log('otherHasUno:', otherHasUno);
+  console.log('gameOver:', gameOver);
+
   return (
     <div className="App">
       <ConnectionState isConnected={isConnected} />
@@ -193,6 +234,10 @@ function App() {
       </form>
       {activeColor ? <p>{activeColor}</p> : null}
       {activeNumber ? <p>{activeNumber}</p> : null}
+
+      {hasUno ? <button type="button">UNO!</button> : null}
+      {otherHasUno ? <button type="button">Didn't call UNO</button> : null}
+
       <h1>Play Pile</h1>
       {canChallenge ? (
         <div>
@@ -218,7 +263,7 @@ function App() {
                 type="button"
                 key={i.toString()}
                 onClick={() => playCard(i, card)}
-                disabled={!isCurrentTurn || canChallenge}
+                disabled={!isCurrentTurn || canChallenge || gameOver}
               >
                 {card.suit} - {card.rank}
               </button>
@@ -243,7 +288,7 @@ function App() {
       <button
         type="button"
         onClick={drawCard}
-        disabled={!isCurrentTurn || canChallenge}
+        disabled={!isCurrentTurn || canChallenge || gameOver}
       >
         Draw Card
       </button>
