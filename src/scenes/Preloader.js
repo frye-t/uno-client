@@ -52,6 +52,7 @@ export class Preloader extends Scene {
 
     // Load additional images
     this.load.image('card_back', 'Deck.png');
+    this.load.image('deck_full', 'Deck_Full.png');
     this.load.image('wild_card', 'Wild_Card.png');
     this.load.image('wild_draw4', 'Wild_Draw4.png');
   }

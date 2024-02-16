@@ -59,4 +59,8 @@ export class SocketController {
     console.log('Emitting playCard:', rank, suit);
     this.socket.emit('playCard', { id, suit, rank });
   }
+
+  sendDrawCard() {
+    this.socket.emit('drawCard');
+  }
 }

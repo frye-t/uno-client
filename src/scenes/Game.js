@@ -4,6 +4,7 @@ import { PlayerGameView } from '../views/PlayerGameView';
 import { DiscardPileView } from '../views/DiscardPileView';
 import { UINotification } from '../components/UINotification';
 import { EventDispatcher } from '../utils/EventDispatcher';
+import { UIText } from '../components/UIText';
 
 export class Game extends Scene {
   constructor() {
@@ -69,12 +70,41 @@ export class Game extends Scene {
     this.socketController.setCallbackForEvent('turnWaiting', () => {
       this.isTurn = false;
     });
+
+    this.socketController.setCallbackForEvent('roundOver', (data) => {
+      console.log('Got Round Over');
+      const { playerId } = data;
+      const text =
+        playerId === this.playerController.getSelfId()
+          ? 'You win!'
+          : `${this.playerController.getPlayerNameById(playerId)} wins!`;
+      const playerWinsText = new UIText(this, text, 50);
+      playerWinsText.setLoc(0, 200);
+      playerWinsText.centerHorizontally();
+    });
   }
 
   create() {
     this.cameras.main.setBackgroundColor(0x00ff00);
 
     this.add.image(640, 360, 'background').setAlpha(1);
+
+    // Create the deck to pull from
+    const deck = this.add
+      .image(840, 360, 'deck_full')
+      .setAlpha(1)
+      .setScale(0.3);
+    deck.setInteractive();
+    deck.on('pointerdown', this.handleDrawCard.bind(this));
+  }
+
+  handleDrawCard() {
+    if (this.isTurn) {
+      console.log('Gonna try to draw a card now!');
+      this.socketController.sendDrawCard();
+    } else {
+      console.log("Can't draw, it's not your turn!");
+    }
   }
 
   handleCardSelection(cardData) {

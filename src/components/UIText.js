@@ -12,6 +12,10 @@ export class UIText {
     });
   }
 
+  centerHorizontally() {
+    this.gameObject.x = 640 - this.gameObject.displayWidth / 2;
+  }
+
   getGameObject() {
     return this.gameObject;
   }

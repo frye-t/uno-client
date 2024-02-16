@@ -68,6 +68,10 @@ export class PlayerController {
     return this.players.get(id);
   }
 
+  getPlayerNameById(id) {
+    return this.players.get(id).getName();
+  }
+
   getSelf() {
     return Array.from(this.players.values()).filter((p) => p.getIsSelf())[0];
   }
