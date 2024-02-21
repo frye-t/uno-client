@@ -11,6 +11,7 @@ export class SocketController {
     this.socket.on('gameState', this.handleGameState.bind(this));
     this.socket.on('turnStart', this.handleTurnStart.bind(this));
     this.socket.on('turnWaiting', this.handleTurnWaiting.bind(this));
+    this.socket.on('chooseColor', this.handleChooseColor.bind(this));
 
     this.socket.onAny((eventName, data) => {
       this.handleEventCallback(eventName, data);
@@ -42,6 +43,11 @@ export class SocketController {
     console.log('Got a turn waiting:', data);
   }
 
+  handleChooseColor(data) {
+    console.log('You need to choose a color!');
+    console.log(data);
+  }
+
   handleAllPlayersLoaded(data) {
     // Do something once all players are loaded
   }
@@ -62,5 +68,19 @@ export class SocketController {
 
   sendDrawCard() {
     this.socket.emit('drawCard');
+  }
+
+  sendChooseColor(color) {
+    this.socket.emit('additionalAction', {
+      action: 'colorChosen',
+      value: color,
+    });
+  }
+
+  sendHandleChallenge(value) {
+    this.socket.emit('additionalAction', {
+      action: 'handleChallenge',
+      value: value.toString(),
+    });
   }
 }
