@@ -34,4 +34,16 @@ export class PlayerGameView {
       handView.updateHand(handData, isSelf);
     }
   }
+
+  enableHand(playerId) {
+    const handView = this.handViews.get(playerId);
+    handView.enableInteractive();
+  }
+
+  disableHand(playerId) {
+    console.log('HAND VIEWS:', this.handViews);
+    const handView = this.handViews.get(playerId);
+    handView.disableInteractive();
+    console.log('HAND VIEW DISABLED');
+  }
 }

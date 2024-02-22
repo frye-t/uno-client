@@ -134,4 +134,12 @@ export class PlayerController {
     console.log('----------------------');
     this.players.get(id).adjustPlayArea(displayParam);
   }
+
+  enableSelfHand() {
+    this.playerView.enableHand(this.getSelfId());
+  }
+
+  disableSelfHand() {
+    this.playerView.disableHand(this.getSelfId());
+  }
 }

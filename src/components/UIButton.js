@@ -10,6 +10,15 @@ export class UIButton {
     this.text = new UIText(scene, text);
   }
 
+  setBorderColor(hexValue) {
+    console.log('setting border color to:', hexValue);
+    this.rect.setStrokeStyle(1, hexValue);
+  }
+
+  setTextColor(hexValue) {
+    this.text.setTextColor(hexValue);
+  }
+
   setLoc(x, y) {
     this.rect.x = x;
     this.rect.y = y;
@@ -23,5 +32,14 @@ export class UIButton {
 
   getRect() {
     return this.rect;
+  }
+
+  width() {
+    return this.rect.width;
+  }
+
+  destroy() {
+    this.rect.destroy();
+    this.text.destroy();
   }
 }

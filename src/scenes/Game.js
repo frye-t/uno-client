@@ -5,6 +5,7 @@ import { DiscardPileView } from '../views/DiscardPileView';
 import { UINotification } from '../components/UINotification';
 import { EventDispatcher } from '../utils/EventDispatcher';
 import { UIText } from '../components/UIText';
+import { UIButton } from '../components/UIButton';
 
 export class Game extends Scene {
   constructor() {
@@ -13,6 +14,9 @@ export class Game extends Scene {
     this.isTurn = false;
 
     this.emitter.on('CARD_SELECTED', this.handleCardSelection.bind(this));
+
+    this.declareUNOBtn;
+    this.callUndeclaredUNOBtn;
   }
 
   init(data) {
@@ -46,21 +50,17 @@ export class Game extends Scene {
   }
 
   bindSocketEventCallbacks() {
+    // Reactor these to be event listeners from the SocketController
     this.socketController.setCallbackForEvent('allPlayersLoaded', () => {
       if (this.isHost) {
         this.socketController.sendStartGame();
       }
     });
 
-    this.socketController.setCallbackForEvent('gameState', (data) => {
-      const gameState = JSON.parse(data);
-      this.gameState.update(gameState);
-      this.playerController.updateGameState(gameState);
-
-      // This won't work in the long run, but it works for now
-      // Only want to update the Discard Pile if there's a new card there
-      this.discardPileView.updateDiscardPile(gameState);
-    });
+    this.socketController.setCallbackForEvent(
+      'gameState',
+      this.handleGameState.bind(this)
+    );
 
     this.socketController.setCallbackForEvent('turnStart', () => {
       this.isTurn = true;
@@ -82,6 +82,265 @@ export class Game extends Scene {
       playerWinsText.setLoc(0, 200);
       playerWinsText.centerHorizontally();
     });
+
+    this.socketController.setCallbackForEvent('chooseColor', () => {
+      const text = new UIText(this, 'Pick a color!', 40);
+      // Need to hide top card
+      this.renderChooseColorModal();
+      // this.socketController.setCallbackForEvent('gameState', (data) => {
+      //   this.handleGameState(data);
+      // });
+    });
+
+    this.socketController.setCallbackForEvent('challenge', () => {
+      console.log('Received a challenge event');
+      this.renderChallengeModal();
+    });
+
+    this.socketController.setCallbackForEvent('canUno', () => {
+      console.log("YOU'RE ABLE TO UNO THIS TURN!!!!!!!!!");
+      this.declareUNOBtn = new UIButton(this, 'UNO!');
+      this.declareUNOBtn.setLoc(1000, 600);
+
+      this.declareUNOBtn.onClick(() => {
+        this.socketController.sendDeclareUno();
+        this.declareUNOBtn.destroy();
+        this.declareUNOBtn = null;
+      });
+    });
+
+    this.socketController.setCallbackForEvent('unoSelf', (data) => {
+      console.log('YOU GOT UNO:', data);
+    });
+
+    this.socketController.setCallbackForEvent('uno', (data) => {
+      console.log('A PLAYER GOT UNO:', data);
+      const { playerId } = data;
+      const playerName = this.playerController.getPlayerNameById(playerId);
+      const text = `${playerName} has UNO!`;
+      const unoNotif = new UINotification(this, text);
+    });
+
+    this.socketController.setCallbackForEvent('undeclaredUno', (data) => {
+      console.log('!!!!!!!!!!!!!!!Player', data, "didn't declare UNO!");
+
+      const { playerId } = data;
+      this.callUndeclaredUNOBtn = new UIButton(this, 'Callout');
+      this.callUndeclaredUNOBtn.setLoc(200, 600);
+
+      this.callUndeclaredUNOBtn.onClick(() => {
+        this.socketController.sendCallUndeclaredUno(playerId);
+      });
+    });
+
+    this.socketController.setCallbackForEvent('undeclaredUnoSelf', () => {
+      console.log("You didn't declare UNO, whoops!");
+    });
+
+    this.socketController.setCallbackForEvent('calledUndeclaredUno', () => {
+      console.log(
+        '!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!Someone clicked the button to callout an UNO'
+      );
+      if (this.callUndeclaredUNOBtn) {
+        this.callUndeclaredUNOBtn.destroy();
+        this.callUndeclaredUNOBtn = null;
+      }
+    });
+  }
+
+  handleGameState(data) {
+    const gameState = JSON.parse(data);
+    this.gameState.update(gameState);
+    this.playerController.updateGameState(gameState);
+
+    // This won't work in the long run, but it works for now
+    // Only want to update the Discard Pile if there's a new card there
+    this.discardPileView.updateDiscardPile(gameState);
+  }
+
+  renderChallengeModal() {
+    const modalObjects = [];
+
+    const fader = this.add.image(640, 360, 'background').setAlpha(0.7);
+    modalObjects.push(fader);
+
+    this.graphics = this.add.graphics();
+
+    const modalWidth = 600;
+    const modalHeight = 300;
+
+    this.graphics.fillStyle(0xeeeeee, 1);
+    this.graphics.fillRoundedRect(
+      640 - modalWidth / 2,
+      360 - modalHeight / 2,
+      modalWidth,
+      modalHeight,
+      10
+    );
+
+    this.graphics.lineStyle(2, 0x000000, 1);
+    this.graphics.strokeRoundedRect(
+      640 - modalWidth / 2,
+      360 - modalHeight / 2,
+      modalWidth,
+      modalHeight,
+      10
+    );
+
+    const pickText = new UIText(this, 'Do you want to Challenge?', 30);
+    // Center Horizontally
+    const x = 640 - pickText.width() / 2;
+    // Place 30 pixels below top of modal
+    const y = 360 - modalHeight / 2 + 30;
+    pickText.setLoc(x, y);
+    modalObjects.push(pickText);
+
+    const yesBtn = new UIButton(this, 'Yes');
+    const noBtn = new UIButton(this, 'No');
+    modalObjects.push(yesBtn, noBtn);
+
+    yesBtn.setBorderColor(0x000000);
+    yesBtn.setTextColor(0x000000);
+
+    noBtn.setBorderColor(0x000000);
+    noBtn.setTextColor(0x000000);
+
+    const modalSectionWidth = modalWidth / 2;
+    yesBtn.setLoc(640 - modalSectionWidth / 2, 360);
+    noBtn.setLoc(640 + modalSectionWidth / 2, 360);
+
+    yesBtn.onClick(() => {
+      this.socketController.sendHandleChallenge(true);
+      this.modalReset(modalObjects);
+    });
+
+    noBtn.onClick(() => {
+      this.socketController.sendHandleChallenge(false);
+      this.modalReset(modalObjects);
+    });
+  }
+
+  renderChooseColorModal() {
+    console.log('Going to render modal');
+    this.playerController.disableSelfHand();
+    const modalObjects = [];
+
+    const fader = this.add.image(640, 360, 'background').setAlpha(0.7);
+    modalObjects.push(fader);
+
+    this.graphics = this.add.graphics();
+
+    const modalWidth = 600;
+    const modalHeight = 300;
+
+    this.graphics.fillStyle(0xeeeeee, 1);
+    this.graphics.fillRoundedRect(
+      640 - modalWidth / 2,
+      360 - modalHeight / 2,
+      modalWidth,
+      modalHeight,
+      10
+    );
+
+    this.graphics.lineStyle(2, 0x000000, 1);
+    this.graphics.strokeRoundedRect(
+      640 - modalWidth / 2,
+      360 - modalHeight / 2,
+      modalWidth,
+      modalHeight,
+      10
+    );
+
+    const pickText = new UIText(this, 'Pick a Color!', 30);
+    // Center Horizontally
+    const x = 640 - pickText.width() / 2;
+    // Place 30 pixels below top of modal
+    const y = 360 - modalHeight / 2 + 30;
+    pickText.setLoc(x, y);
+    modalObjects.push(pickText);
+
+    const elipseWidth = 115;
+    const elipseHeight = 144;
+
+    const redEllipse = this.createModalEllipse(
+      0,
+      0xea323c,
+      modalWidth,
+      modalHeight
+    );
+
+    const greenEllipse = this.createModalEllipse(
+      1,
+      0x33984b,
+      modalWidth,
+      modalHeight
+    );
+
+    const yellowEllipse = this.createModalEllipse(
+      2,
+      0xffc825,
+      modalWidth,
+      modalHeight
+    );
+
+    const blueEllipse = this.createModalEllipse(
+      3,
+      0x0098dc,
+      modalWidth,
+      modalHeight
+    );
+    modalObjects.push(redEllipse, greenEllipse, yellowEllipse, blueEllipse);
+
+    redEllipse.on('pointerdown', (d) => {
+      console.log('Red Ellipse Clicked:', d);
+      this.socketController.sendChooseColor('Red');
+      this.modalReset(modalObjects);
+    });
+
+    greenEllipse.on('pointerdown', (d) => {
+      console.log('Green Ellipse Clicked:', d);
+      this.socketController.sendChooseColor('Green');
+      this.modalReset(modalObjects);
+    });
+
+    yellowEllipse.on('pointerdown', (d) => {
+      console.log('Yellow Ellipse Clicked:', d);
+      this.socketController.sendChooseColor('Yellow');
+      this.modalReset(modalObjects);
+    });
+
+    blueEllipse.on('pointerdown', (d) => {
+      console.log('Blue Ellipse Clicked:', d);
+      this.socketController.sendChooseColor('Blue');
+      this.modalReset(modalObjects);
+    });
+  }
+
+  modalReset(modalObjects) {
+    modalObjects.forEach((o) => o.destroy());
+    this.graphics.clear();
+    this.playerController.enableSelfHand();
+  }
+
+  createModalEllipse(num, color, modalWidth, modalHeight) {
+    const elipseWidth = 115;
+    const elipseHeight = 144;
+    const modalSectionWidth = modalWidth / 4;
+    const x =
+      640 - modalHeight + modalSectionWidth * num + modalSectionWidth / 2;
+
+    const elipse = this.add.ellipse(
+      x,
+      360,
+      elipseWidth,
+      elipseHeight,
+      color,
+      1
+    );
+    elipse.setStrokeStyle(1, 0x000000);
+    elipse.angle = 30;
+    elipse.setInteractive();
+    return elipse;
   }
 
   create() {
@@ -105,6 +364,11 @@ export class Game extends Scene {
     } else {
       console.log("Can't draw, it's not your turn!");
     }
+
+    if (this.declareUNOBtn) {
+      this.declareUNOBtn.destroy();
+      this.declareUNOBtn = null;
+    }
   }
 
   handleCardSelection(cardData) {
@@ -115,6 +379,11 @@ export class Game extends Scene {
       this.socketController.sendPlayCard(playerId, cardData);
     } else {
       console.log("It's not your turn!");
+    }
+
+    if (this.declareUNOBtn) {
+      this.declareUNOBtn.destroy();
+      this.declareUNOBtn = null;
     }
   }
 }

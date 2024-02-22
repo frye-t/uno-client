@@ -24,6 +24,10 @@ export class UIText {
     this.gameObject.setText(text);
   }
 
+  setTextColor(hexValue) {
+    this.gameObject.setStyle({ color: hexValue });
+  }
+
   enableFadeOut(duration) {
     this.scene.tweens.add({
       targets: this.gameObject,
@@ -45,5 +49,9 @@ export class UIText {
 
   destroy() {
     this.gameObject.destroy();
+  }
+
+  width() {
+    return this.gameObject.displayWidth;
   }
 }
