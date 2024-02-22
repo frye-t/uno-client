@@ -14,6 +14,9 @@ export class Game extends Scene {
     this.isTurn = false;
 
     this.emitter.on('CARD_SELECTED', this.handleCardSelection.bind(this));
+
+    this.declareUNOBtn;
+    this.callUndeclaredUNOBtn;
   }
 
   init(data) {
@@ -93,6 +96,56 @@ export class Game extends Scene {
       console.log('Received a challenge event');
       this.renderChallengeModal();
     });
+
+    this.socketController.setCallbackForEvent('canUno', () => {
+      console.log("YOU'RE ABLE TO UNO THIS TURN!!!!!!!!!");
+      this.declareUNOBtn = new UIButton(this, 'UNO!');
+      this.declareUNOBtn.setLoc(1000, 600);
+
+      this.declareUNOBtn.onClick(() => {
+        this.socketController.sendDeclareUno();
+        this.declareUNOBtn.destroy();
+        this.declareUNOBtn = null;
+      });
+    });
+
+    this.socketController.setCallbackForEvent('unoSelf', (data) => {
+      console.log('YOU GOT UNO:', data);
+    });
+
+    this.socketController.setCallbackForEvent('uno', (data) => {
+      console.log('A PLAYER GOT UNO:', data);
+      const { playerId } = data;
+      const playerName = this.playerController.getPlayerNameById(playerId);
+      const text = `${playerName} has UNO!`;
+      const unoNotif = new UINotification(this, text);
+    });
+
+    this.socketController.setCallbackForEvent('undeclaredUno', (data) => {
+      console.log('!!!!!!!!!!!!!!!Player', data, "didn't declare UNO!");
+
+      const { playerId } = data;
+      this.callUndeclaredUNOBtn = new UIButton(this, 'Callout');
+      this.callUndeclaredUNOBtn.setLoc(200, 600);
+
+      this.callUndeclaredUNOBtn.onClick(() => {
+        this.socketController.sendCallUndeclaredUno(playerId);
+      });
+    });
+
+    this.socketController.setCallbackForEvent('undeclaredUnoSelf', () => {
+      console.log("You didn't declare UNO, whoops!");
+    });
+
+    this.socketController.setCallbackForEvent('calledUndeclaredUno', () => {
+      console.log(
+        '!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!Someone clicked the button to callout an UNO'
+      );
+      if (this.callUndeclaredUNOBtn) {
+        this.callUndeclaredUNOBtn.destroy();
+        this.callUndeclaredUNOBtn = null;
+      }
+    });
   }
 
   handleGameState(data) {
@@ -169,6 +222,7 @@ export class Game extends Scene {
 
   renderChooseColorModal() {
     console.log('Going to render modal');
+    this.playerController.disableSelfHand();
     const modalObjects = [];
 
     const fader = this.add.image(640, 360, 'background').setAlpha(0.7);
@@ -265,6 +319,7 @@ export class Game extends Scene {
   modalReset(modalObjects) {
     modalObjects.forEach((o) => o.destroy());
     this.graphics.clear();
+    this.playerController.enableSelfHand();
   }
 
   createModalEllipse(num, color, modalWidth, modalHeight) {
@@ -309,6 +364,11 @@ export class Game extends Scene {
     } else {
       console.log("Can't draw, it's not your turn!");
     }
+
+    if (this.declareUNOBtn) {
+      this.declareUNOBtn.destroy();
+      this.declareUNOBtn = null;
+    }
   }
 
   handleCardSelection(cardData) {
@@ -319,6 +379,11 @@ export class Game extends Scene {
       this.socketController.sendPlayCard(playerId, cardData);
     } else {
       console.log("It's not your turn!");
+    }
+
+    if (this.declareUNOBtn) {
+      this.declareUNOBtn.destroy();
+      this.declareUNOBtn = null;
     }
   }
 }

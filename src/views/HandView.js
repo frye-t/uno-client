@@ -15,6 +15,18 @@ export class HandView {
     this.cardViews = [];
   }
 
+  disableInteractive() {
+    this.cardViews.forEach((cardView) => {
+      cardView.disableInteractive();
+    });
+  }
+
+  enableInteractive() {
+    this.cardViews.forEach((cardView) => {
+      cardView.enableInteractive();
+    });
+  }
+
   createPlayArea() {
     const playArea = this.scene.add.container(
       this.displayParam.x,

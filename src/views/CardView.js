@@ -46,6 +46,14 @@ export class CardView {
     this.image.destroy();
   }
 
+  enableInteractive() {
+    this.image.setInteractive();
+  }
+
+  disableInteractive() {
+    this.image.disableInteractive();
+  }
+
   setInteractive() {
     this.image.setInteractive();
     const originalY = this.image.y;

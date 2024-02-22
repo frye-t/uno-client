@@ -83,4 +83,18 @@ export class SocketController {
       value: value.toString(),
     });
   }
+
+  sendDeclareUno() {
+    this.socket.emit('additionalAction', {
+      action: 'declareUno',
+      value: 'true',
+    });
+  }
+
+  sendCallUndeclaredUno(playerId) {
+    this.socket.emit('additionalAction', {
+      action: 'callUndeclaredUno',
+      value: playerId,
+    });
+  }
 }
